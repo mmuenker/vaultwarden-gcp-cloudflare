@@ -8,4 +8,8 @@ COPY rclone.conf /rclone.conf
 
 COPY entrypoint.sh /entrypoint.sh
 
+COPY make-backup.sh /make-backup.sh
+
+COPY run-rclone.sh /run-rclone.sh
+
 ENTRYPOINT [ "/entrypoint.sh" ]
