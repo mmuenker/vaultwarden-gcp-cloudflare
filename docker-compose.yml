@@ -49,8 +49,6 @@ services:
     container_name: proxy
     volumes:
       - ${PWD}/haproxy:/usr/local/etc/haproxy:ro
-    networks:
-      - vwd
 
   cloudflared:
     # Cloudflared is a proxy tunnel that allows you to expose local services to the internet
