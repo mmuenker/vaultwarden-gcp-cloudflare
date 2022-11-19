@@ -1,18 +1,26 @@
 version: "3"
-
+volumes:
+  data:
+  backups:
 services:
+
+  backup:
+    build:
+      context: ./backup
+    container_name: backup
+    restart: always
+    volumes:
+      - backups:/backups
+      - data:/data:ro
+
   vaultwarden:
-    # Standard Bitwarden is very resource-heavy and cannot run on micro cloud instances
-    # Vaultwarden is a Rust (mostly) feature-complete implementation of Bitwarden
-    # https://github.com/dani-garcia/vaultwarden
     image: vaultwarden/server:alpine
     restart: always
     container_name: vaultwarden
     depends_on:
       - proxy
     volumes:
-      - ${PWD}/vaultwarden:/data
-      - ${PWD}/utilities/backup.sh:/backup.sh:ro
+      - data:/data
     environment:
       - LOG_FILE=/data/vaultwarden.log
       - WEBSOCKET_ENABLED=true # required for websockets
@@ -32,27 +40,6 @@ services:
       - YUBICO_SECRET_KEY
       - YUBICO_SERVER
       - ORG_CREATION_USERS
-      - BACKUP
-      - BACKUP_DAYS
-      - BACKUP_DIR
-      - BACKUP_EMAIL_FROM_NAME
-      - BACKUP_ENCRYPTION_KEY
-      - BACKUP_EMAIL_TO
-      - BACKUP_EMAIL_NOTIFY
-      - BACKUP_RCLONE_CONF
-      - BACKUP_RCLONE_DEST
-    networks:
-      - vwd
-    command: >
-      sh -c 'if [ -n "$BACKUP" ]; 
-             then 
-               apk --update --no-cache add sqlite
-               ln -sf /proc/1/fd/1 /var/log/backup.log &&
-               sed -i "/ash \\/backup\\.sh /d" /etc/crontabs/root &&
-               echo "$BACKUP_SCHEDULE ash /backup.sh $BACKUP" >> /etc/crontabs/root && 
-               crond -d 8; 
-             fi &&
-             exec /start.sh'
 
   proxy:
     # HAProxy to wrap all services and provide SSL if needed
@@ -72,8 +59,6 @@ services:
     command: tunnel --no-autoupdate run --token ${CF_TUNNEL_TOKEN}
     depends_on:
       - vaultwarden
-    networks:
-      - vwd
 
   fail2ban:
     # Implements fail2ban functionality, banning ips that
@@ -87,7 +72,7 @@ services:
       - vaultwarden
     volumes:
       - ${PWD}/fail2ban:/data
-      - ${PWD}/vaultwarden:/vaultwarden:ro
+      - data:/vaultwarden:ro
     environment:
       - F2B_DB_PURGE_AGE=30d
       - F2B_LOG_TARGET=/data/fail2ban.log
@@ -107,8 +92,6 @@ services:
       - CF_USER
       - CF_TOKEN
       - TZ
-    networks:
-      - vwd
 
   watchtower:
     # Watchtower will pull down your new image, gracefully shut down your existing container
@@ -125,9 +108,4 @@ services:
       - WATCHTOWER_CLEANUP=true
       - WATCHTOWER_SCHEDULE
       - TZ
-    networks:
-      - vwd
-
-networks:
-  vwd:
 

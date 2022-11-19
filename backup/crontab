@@ -1,0 +1,2 @@
+0 * * * * /run-rclone.sh
+45 * * * * /make-backup.sh
