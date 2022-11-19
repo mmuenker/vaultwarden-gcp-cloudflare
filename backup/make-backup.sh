@@ -13,6 +13,7 @@ SQL_NAME="db.sqlite3"
 SQL_BACKUP_DIR="/tmp"
 SQL_BACKUP_NAME=$SQL_BACKUP_DIR/$SQL_NAME
 sqlite3 /data/$SQL_NAME ".backup '$SQL_BACKUP_NAME'"
+LOG=/var/log/backup.log
 
 # build a string of files and directories to back up
 DATA="/data"
