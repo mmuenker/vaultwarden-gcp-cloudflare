@@ -2,6 +2,7 @@ version: "3"
 volumes:
   data:
     name: vaultwarden_data
+    external: true
   backups:
 services:
 
